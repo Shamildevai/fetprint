@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>منظومة جداول التوقيت المدرسي - V3.2 Universal Pro</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts for Arabic Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Cairo:wght@300;400;500;600;700;800;900&family=Changa:wght@500;700;800&family=Fira+Code:wght@400;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+  
+  <!-- QRCode.js Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <!-- Tailwind CSS Configuration -->
+  <script src="js/tailwind.config.js"></script>
+
+  <!-- Application Stylesheet -->
+  <link rel="stylesheet" href="css/styles.css">
+
+  <style id="dynamicPrintStyle">
+    @page { size: A4 landscape; margin: 4.5mm; }  </style>
+</head>
+
+<body class="min-h-screen flex flex-col selection:bg-brand-200">
+
+  <header class="no-print bg-slate-900 text-white shadow-xl sticky top-0 z-50 border-b border-slate-700/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="h-16 flex items-center justify-between border-b border-slate-800 gap-4">
+        
+        <div class="flex items-center space-x-reverse space-x-3 min-w-0">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center text-xl shadow-lg shadow-brand-950/40 flex-shrink-0 border border-brand-400/30">
+            🏫
+          </div>
+          <div class="truncate">
+            <div class="flex items-center gap-2">
+              <h1 class="text-sm sm:text-base font-black tracking-wide text-white truncate">منظومة جداول التوقيت</h1>
+              <span class="bg-brand-500/20 text-brand-400 text-[10px] font-bold px-1.5 py-0.5 rounded border border-brand-500/30">V3.2 Universal Pro</span>
+            </div>
+            <p id="navSchoolName" class="text-xs text-brand-400 font-bold truncate">ثانوية المتنبي</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 sm:gap-3">
+          <label class="cursor-pointer bg-slate-800 hover:bg-slate-700 text-brand-400 hover:text-white border border-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm" title="فتح ملف FET بتنسيق XML">
+            <svg class="w-4 h-4 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+            <span class="hidden md:inline">استيراد FET</span>
+            <input type="file" accept=".xml,.fet" class="hidden" onchange="handleXmlUpload(event)">
+          </label>
+
+          <div class="hidden sm:flex items-center gap-1 bg-slate-950/90 p-1 rounded-xl border border-slate-800 text-xs font-bold">
+            <button onclick="exportProjectToFile()" class="text-slate-300 hover:text-white hover:bg-slate-800 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1" title="حفظ المشروع كاملاً في ملف على الحاسوب">
+              <span>💾</span>
+              <span class="hidden lg:inline">حفظ كملف</span>
+            </button>
+            <label class="cursor-pointer text-slate-300 hover:text-white hover:bg-slate-800 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1" title="فتح ملف مشروع محفوظ مسبقاً (.fetpro / .json)">
+              <span>📂</span>
+              <span class="hidden lg:inline">فتح ملف</span>
+              <input type="file" accept=".fetpro,.json" class="hidden" onchange="importProjectFromFile(event)">
+            </label>
+          </div>
+
+          <nav class="flex items-center bg-slate-950/80 p-1 rounded-xl border border-slate-800 text-xs font-bold shadow-inner">
+            <button id="tabBtn-classes" onclick="switchTab('classes')" class="tab-btn bg-brand-600 text-white px-2.5 sm:px-3 py-1.5 rounded-lg shadow transition flex items-center gap-1.5">
+              <span>👨‍🎓</span>
+              <span class="hidden sm:inline">الأقسام</span>
+            </button>
+            <button id="tabBtn-teachers" onclick="switchTab('teachers')" class="tab-btn text-slate-300 hover:text-white hover:bg-slate-800 px-2.5 sm:px-3 py-1.5 rounded-lg transition flex items-center gap-1.5">
+              <span>👨‍🏫</span>
+              <span class="hidden sm:inline">الأساتذة</span>
+            </button>
+            <button id="tabBtn-global" onclick="switchTab('global')" class="tab-btn text-slate-300 hover:text-white hover:bg-slate-800 px-2.5 sm:px-3 py-1.5 rounded-lg transition flex items-center gap-1.5">
+              <span>📊</span>
+              <span class="hidden sm:inline">الجداول العامة</span>
+            </button>
+            <button id="tabBtn-rooms" onclick="switchTab('rooms')" class="tab-btn text-slate-300 hover:text-white hover:bg-slate-800 px-2.5 sm:px-3 py-1.5 rounded-lg transition flex items-center gap-1.5">
+              <span>🏛️</span>
+              <span class="hidden sm:inline">القاعات</span>
+            </button>
+            <button id="tabBtn-pointing" onclick="switchTab('pointing')" class="tab-btn text-slate-300 hover:text-white hover:bg-slate-800 px-2.5 sm:px-3 py-1.5 rounded-lg transition flex items-center gap-1.5">
+              <span>📝</span>
+              <span class="hidden md:inline">الورقة الدوارة</span>
+            </button>
+            <button id="tabBtn-settings" onclick="switchTab('settings')" class="tab-btn text-slate-300 hover:text-white hover:bg-slate-800 px-2.5 sm:px-3 py-1.5 rounded-lg transition flex items-center gap-1.5">
+              <span>⚙️</span>
+              <span class="hidden md:inline">الإعدادات والسيرفر</span>
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      <div id="toolbarSelectionRow" class="py-3 flex items-center justify-between flex-wrap gap-3 text-xs">
+        
+        <div class="flex items-center space-x-reverse space-x-2 flex-wrap">
+          <span id="selectorLabel" class="font-bold text-slate-300 text-xs flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse"></span> اختر القسم:
+          </span>
+          
+          <div class="flex items-center bg-slate-800 rounded-lg p-0.5 border border-slate-700 shadow-sm">
+            <button onclick="navigateItem(-1)" class="text-slate-300 hover:text-white hover:bg-slate-700 p-1.5 rounded-md transition" title="السابق">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </button>
+            
+            <select id="itemSelect" onchange="handleItemSelect(this.value)" class="bg-slate-800 text-white text-xs font-bold py-1.5 px-2 focus:outline-none min-w-[150px] max-w-[220px] cursor-pointer appearance-none text-center">
+            </select>
+
+            <button onclick="navigateItem(1)" class="text-slate-300 hover:text-white hover:bg-slate-700 p-1.5 rounded-md transition" title="التالي">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            </button>
+          </div>
+
+          <!-- View Layout Combobox (Horizontal vs Vertical) -->
+          <div class="flex items-center gap-1.5 bg-slate-800 px-2.5 py-1.5 rounded-lg border border-brand-500/40 shadow-sm" title="تحديد شكل وهيئة عرض الجدول: الأيام أفقية في الأعلى أو رأسية في اليمين">
+            <span class="text-brand-400 font-extrabold flex items-center gap-1">
+              <span>📐 الهيئة:</span>
+            </span>
+            <select id="gridOrientationSelect" onchange="handleGridOrientationChange(this.value)" class="bg-slate-900 text-white text-xs font-bold p-1 rounded border border-slate-700 outline-none cursor-pointer">
+              <option value="days-cols">الأيام أفقياً (في الأعمدة)</option>
+              <option value="days-rows">الأيام رأسياً (في الأسطر)</option>
+            </select>
+          </div>
+
+          <div class="relative">
+            <input type="text" id="quickSearchInput" oninput="filterDropdownList(this.value)" placeholder="بحث سريع..." class="bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-xs rounded-lg py-1.5 pr-2.5 pl-7 w-28 focus:w-44 transition-all focus:ring-1 focus:ring-brand-500 focus:outline-none shadow-sm">
+            <span class="absolute left-2.5 top-2 text-slate-400">🔍</span>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-reverse space-x-3 flex-wrap">
+          
+          <div class="flex items-center space-x-reverse space-x-2 bg-slate-800/80 p-1.5 rounded-lg border border-slate-700 shadow-inner">
+            <label class="inline-flex items-center gap-1.5 cursor-pointer hover:bg-slate-700 px-2 py-0.5 rounded text-[11px] text-slate-200 transition">
+              <input type="checkbox" id="showTeachersToggle" onchange="handleVisibilityToggle()" checked class="w-3.5 h-3.5 text-brand-600 rounded bg-slate-900 border-slate-600 focus:ring-brand-500">
+              <span>👨‍🏫 الأستاذ</span>
+            </label>
+            <label class="inline-flex items-center gap-1.5 cursor-pointer hover:bg-slate-700 px-2 py-0.5 rounded text-[11px] text-slate-200 transition">
+              <input type="checkbox" id="showRoomsToggle" onchange="handleVisibilityToggle()" checked class="w-3.5 h-3.5 text-brand-600 rounded bg-slate-900 border-slate-600 focus:ring-brand-500">
+              <span>🏛️ القاعة</span>
+            </label>
+            <label class="inline-flex items-center gap-1.5 cursor-pointer hover:bg-slate-700 px-2 py-0.5 rounded text-[11px] text-slate-200 transition">
+              <input type="checkbox" id="showClassesToggle" onchange="handleVisibilityToggle()" checked class="w-3.5 h-3.5 text-brand-600 rounded bg-slate-900 border-slate-600 focus:ring-brand-500">
+              <span>👥 الفوج</span>
+            </label>
+          </div>
+
+          <div class="h-6 w-px bg-slate-700"></div>
+
+          <div class="flex items-center space-x-reverse space-x-2">
+            <label class="inline-flex items-center gap-1.5 cursor-pointer bg-amber-950/40 hover:bg-amber-900/60 border border-amber-600/50 px-2.5 py-1.5 rounded-lg text-xs font-bold text-amber-300 transition" title="طباعة اقتصادية بدون خلفيات ملونة">
+              <input type="checkbox" id="inkSaverToggle" onchange="toggleInkSaver(this.checked)" class="w-3.5 h-3.5 text-amber-500 bg-slate-800 border-amber-500 rounded focus:ring-amber-400">
+              <span>🖨️ توفير الحبر</span>
+            </label>
+
+            <div class="flex items-center gap-1 bg-slate-800 px-2 py-1 rounded-lg border border-slate-700 shadow-sm" title="عدد الجداول في صفحة A4 واحدة">
+              <span class="text-[11px] text-slate-400 font-bold">توزيع A4:</span>
+              <select id="printNUpSelect" onchange="handlePrintNUpChange(this.value)" class="bg-transparent text-brand-400 text-xs font-extrabold focus:outline-none cursor-pointer">
+                <option value="1">1 (ورقة كاملة)</option>
+                <option value="2">2 (نصفين)</option>
+                <option value="3">3 (أثلاث)</option>
+                <option value="4">4 (أرباع 2x2)</option>
+              </select>
+            </div>
+
+            <div class="flex items-center gap-1 bg-slate-800 px-2 py-1 rounded-lg border border-slate-700 shadow-sm" title="اختر قالب تصميم الجدول">
+              <span class="text-[11px] text-slate-400 font-bold">القالب:</span>
+              <select id="quickTemplateSelect" onchange="handleTemplateChange(this.value)" class="bg-transparent text-emerald-400 text-xs font-bold focus:outline-none cursor-pointer max-w-[140px]">
+                <option value="classic-dz">1. الرسمي الكلاسيكي</option>
+                <option value="modern-card">2. العصري النيومورفي</option>
+                <option value="royal-academic">3. الأكاديمي الملكي</option>
+                <option value="minimal-grid">4. المينيمالي الأحادي</option>
+                <option value="tech-blueprint">5. التقني الهندسي</option>
+                <option value="weekly-journal">6. المفكرة المدرسية</option>
+                <option value="ribbon-edge">7. الشريطي الحديث</option>
+                <option value="corporate-flat">8. المؤسساتي المنبسط</option>
+                <option value="vintage-parchment">9. الورقي العتيق</option>
+                <option value="ultra-compact">10. المضغوط الفائق</option>
+              </select>
+            </div>
+
+            <div class="flex items-center space-x-reverse space-x-1.5 ml-1">
+              <button onclick="printCurrentTable()" class="bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg shadow-md transition flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                <span>طباعة الحالية</span>
+              </button>
+
+              <button onclick="printAllCurrentType()" class="bg-white text-slate-900 hover:bg-slate-200 font-bold text-xs px-3 py-1.5 rounded-lg shadow-md transition flex items-center gap-1.5 border border-slate-300" title="طباعة جميع عناصر هذا القسم دفعة واحدة">
+                <svg class="w-3.5 h-3.5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>
+                <span>طباعة الكل</span>
+              </button>
+
+              <button onclick="togglePaperPreviewMode()" id="previewModeBtn" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-1.5 rounded-lg border border-slate-700 transition shadow-sm" title="معاينة شكل ورقة A4 قبل الطباعة">
+                📄
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <main class="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 transition-all duration-300">
+
+    <!-- Active Timetable View Panel -->
+    <div id="viewPanel" class="space-y-4">
+      <div id="timetableSingleCard" class="a4-sheet-canvas bg-white rounded-2xl shadow-paper border border-slate-200 p-5 sm:p-6 transition-all mx-auto max-w-full overflow-hidden">
+      </div>
+    </div>
+
+    <!-- Global Institution Timetable Panel -->
+    <div id="globalViewPanel" class="hidden space-y-6">
+      <div class="bg-white rounded-2xl shadow-paper border border-slate-200 p-5 sm:p-8 space-y-6">
+        
+        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-5">
+          <div>
+            <h2 class="text-lg sm:text-xl font-black text-slate-900 flex items-center gap-2">
+              <span class="w-9 h-9 rounded-xl bg-brand-100 text-brand-800 flex items-center justify-center text-xl">📊</span>
+              الجداول العامة المجمعة للمؤسسة
+            </h2>
+            <p class="text-xs text-slate-500 font-medium mt-1">الجدول الموحد التقليدي المعتمد: الأيام والحصص أفقياً، والأفواج / الأساتذة / القاعات رأسياً</p>
+          </div>
+
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold gap-1 shadow-inner">
+              <button id="globalModeBtn-classes_global" onclick="switchGlobalSubMode('classes_global')" class="px-3 py-1.5 rounded-lg bg-brand-600 text-white shadow-sm transition">
+                عام الأقسام
+              </button>
+              <button id="globalModeBtn-teachers_global" onclick="switchGlobalSubMode('teachers_global')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition">
+                عام الأساتذة
+              </button>
+              <button id="globalModeBtn-rooms_global" onclick="switchGlobalSubMode('rooms_global')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition">
+                عام القاعات
+              </button>
+            </div>
+
+            <button onclick="printGlobalTimetableFull()" class="bg-brand-600 hover:bg-brand-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md transition transform hover:-translate-y-0.5" title="طباعة الجدول العام المجمع لكامل الأسبوع">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+              <span>🖨️ طباعة كامل الأسبوع</span>
+            </button>
+
+            <button onclick="printGlobalTimetableByDays()" class="bg-slate-900 hover:bg-slate-800 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md transition transform hover:-translate-y-0.5" title="طباعة كل يوم في ورقة A4 مستقلة لتفادي تقليص الخط وصغر الخلايا">
+              <span>📅</span>
+              <span>طباعة مفصلة (يوم بيوم)</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between flex-wrap gap-3 p-3.5 bg-slate-50/80 rounded-xl border border-slate-200 text-xs font-bold">
+          
+          <div class="flex items-center gap-3 flex-wrap">
+            <span class="text-slate-700 font-extrabold flex items-center gap-1">
+              <span>🔍 تصفية اليوم:</span>
+            </span>
+            <select id="globalDayFilterSelect" onchange="renderGlobalTimetable()" class="bg-white border border-slate-300 text-slate-800 rounded-lg p-1.5 text-xs font-black shadow-sm outline-none cursor-pointer">
+              <option value="ALL">جميع أيام الأسبوع (الجدول الموحد)</option>
+            </select>
+          </div>
+
+          <div class="flex items-center gap-4 flex-wrap">
+            <label class="flex items-center gap-1.5 cursor-pointer text-emerald-950 bg-emerald-100/80 hover:bg-emerald-200 border border-emerald-300 px-2.5 py-1 rounded-lg transition" title="تدوير نص المواد والحصص 90 درجة لجعلها متصلة ومقروءة بشكل ممتاز">
+              <input type="checkbox" id="gRotateTextToggle" onchange="renderGlobalTimetable()" checked class="w-3.5 h-3.5 text-emerald-600 rounded border-emerald-300 focus:ring-emerald-500">
+              <span class="font-black text-emerald-900">🔄 تدوير النص 90° (مقروء)</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer text-brand-900 bg-brand-50 border border-brand-200 px-2.5 py-1 rounded-lg transition">
+              <input type="checkbox" id="gColorizeToggle" onchange="renderGlobalTimetable()" checked class="w-3.5 h-3.5 text-brand-600 rounded border-brand-300 focus:ring-brand-500">
+              <span class="font-extrabold">🎨 تلوين المواد</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer text-slate-800">
+              <input type="checkbox" id="gShowTeachers" onchange="renderGlobalTimetable()" checked class="w-3.5 h-3.5 text-brand-600 rounded border-slate-300 focus:ring-brand-500">
+              <span>الأستاذ</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer text-slate-800">
+              <input type="checkbox" id="gShowRooms" onchange="renderGlobalTimetable()" checked class="w-3.5 h-3.5 text-brand-600 rounded border-slate-300 focus:ring-brand-500">
+              <span>القاعة</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer text-slate-800">
+              <input type="checkbox" id="gShowClasses" onchange="renderGlobalTimetable()" checked class="w-3.5 h-3.5 text-brand-600 rounded border-slate-300 focus:ring-brand-500">
+              <span>القسم</span>
+            </label>
+          </div>
+        </div>
+        
+        <div id="globalTimetableContent" class="overflow-x-auto custom-scrollbar space-y-4"></div>
+      </div>
+    </div>
+
+    <!-- Rooms View Panel -->
+    <div id="roomsViewPanel" class="hidden space-y-6">
+      <div class="bg-white rounded-2xl shadow-paper border border-slate-200 p-5 sm:p-8 space-y-6">
+        
+        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-5">
+          <div>
+            <h2 class="text-lg sm:text-xl font-black text-slate-900 flex items-center gap-2">
+              <span class="w-9 h-9 rounded-xl bg-brand-100 text-brand-800 flex items-center justify-center text-xl">🏛️</span>
+              مخطط شغل الحجرات وجدول القاعات الشاغرة
+            </h2>
+            <p class="text-xs text-slate-500 font-medium mt-1">تحديد القاعات غير المشغولة في كل حصة زمنية على مدار كامل أيام الأسبوع</p>
+          </div>
+
+          <div class="flex items-center gap-3 flex-wrap">
+            <div class="flex items-center bg-slate-100 p-1.5 rounded-xl border border-slate-200 text-xs font-bold shadow-inner-soft">
+              <button id="roomSubTabMatrix" onclick="switchRoomSubView('matrix')" class="px-4 py-1.5 rounded-lg bg-brand-600 text-white shadow-sm transition">
+                📅 جدول الشغور الكامل
+              </button>
+              <button id="roomSubTabSingle" onclick="switchRoomSubView('single')" class="px-4 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition">
+                🏛️ جدول قاعة مخصصة
+              </button>
+            </div>
+
+            <button id="btnPrintRoomsMatrix" onclick="printRoomsMatrix()" class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md transition transform hover:-translate-y-0.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+              <span>طباعة جدول الشغور</span>
+            </button>
+            
+            <button id="btnPrintSingleRoom" onclick="printSingleRoom()" class="hidden bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md transition transform hover:-translate-y-0.5">
+              <svg class="w-4 h-4 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+              <span>طباعة القاعة الحالية</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="roomWeeklyMatrixContainer" class="space-y-4">
+          <div class="flex items-center justify-between p-4 bg-brand-50/50 rounded-xl border border-brand-200/60 text-xs font-bold text-brand-950">
+            <span class="flex items-center gap-2"><span class="text-lg">✨</span> يعرض الجدول أدناه جميع القاعات المتوفرة (الشاغرة) لاستغلالها فورياً.</span>
+            <span id="totalRoomsCountBadge" class="bg-brand-600 text-white px-3 py-1.5 rounded-lg shadow-sm">إجمالي القاعات: 0</span>
+          </div>
+          <div id="weeklyFreeRoomsGrid" class="overflow-x-auto custom-scrollbar pb-2"></div>
+        </div>
+
+        <div id="roomSingleViewContainer" class="hidden space-y-4">
+          <div class="flex items-center gap-4 p-4 bg-slate-50/80 rounded-xl border border-slate-200 shadow-inner-soft">
+            <span class="text-xs font-extrabold text-slate-700">اختر القاعة للاستعراض:</span>
+            <select id="roomSelect" onchange="renderRoomTimetable(this.value)" class="text-xs font-bold p-2.5 border border-slate-300 rounded-lg bg-white min-w-[200px] shadow-sm hover:border-brand-400 transition cursor-pointer"></select>
+          </div>
+          <div id="roomTimetableContainer" class="overflow-x-auto border border-slate-200 rounded-xl p-5 bg-white shadow-soft"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Pointing View Panel (الورقة الدوارة) -->
+    <div id="pointingViewPanel" class="hidden space-y-6">
+      <div class="bg-white rounded-2xl shadow-paper border border-slate-200 p-5 sm:p-7 space-y-5">
+        
+        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
+          <div>
+            <h2 class="text-lg sm:text-xl font-black text-slate-900 flex items-center gap-2">
+              <span class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-xl">📝</span>
+              ورقة الحضور اليومي وتأشيرة الأساتذة (الورقة الدوارة)
+            </h2>
+            <p class="text-xs text-slate-500 font-medium mt-1">ضبط الحضور وغيابات التلاميذ وإمضاء الأساتذة لكل فترة دراسية - إمكانية الطباعة على صفحة كاملة أو مجزأة (صفحتين أو ثلاث) عمودياً أو أفقياً</p>
+          </div>
+
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <div class="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-xl border border-slate-200 text-xs font-bold">
+              <span class="text-slate-600 px-1">الفترة:</span>
+              <select id="pointingPeriodSelect" onchange="renderPointingSheetPreview()" class="bg-white text-slate-900 border border-slate-300 rounded-lg py-1.5 px-3 font-black text-xs shadow-sm cursor-pointer focus:ring-1 focus:ring-brand-500 outline-none">
+              </select>
+            </div>
+
+            <!-- Page Division Select (1, 2 or 3 pages) -->
+            <div class="flex items-center gap-1 bg-slate-100 px-2 py-1 rounded-xl border border-slate-200 text-xs font-bold" title="توزيع الأقسام على أوراق الطباعة A4">
+              <span class="text-slate-600">التوزيع:</span>
+              <select id="pointingPageLayoutSelect" onchange="renderPointingSheetPreview()" class="bg-white text-brand-700 text-xs font-black p-1.5 border border-slate-300 rounded-lg outline-none cursor-pointer">
+                <option value="1page">صفحة واحدة كاملة (A4 x1)</option>
+                <option value="2page">تقسيم على صفحتين (A4 x2)</option>
+                <option value="3page">تقسيم على 3 صفحات (A4 x3)</option>
+              </select>
+            </div>
+
+            <!-- Orientation Select for Pointing (Landscape / Portrait) -->
+            <div class="flex items-center gap-1 bg-slate-100 px-2 py-1 rounded-xl border border-slate-200 text-xs font-bold" title="اتجاه ورقة الطباعة للورقة الدوارة">
+              <span class="text-slate-600">الاتجاه:</span>
+              <select id="pointingOrientationSelect" onchange="handlePointingOrientationChange(this.value)" class="bg-white text-slate-800 text-xs font-bold p-1.5 border border-slate-300 rounded-lg outline-none cursor-pointer">
+                <option value="landscape">أفقي (Landscape)</option>
+                <option value="portrait">عمودي (Portrait)</option>
+              </select>
+            </div>
+
+            <label class="inline-flex items-center gap-1.5 cursor-pointer bg-amber-950/20 hover:bg-amber-900/30 border border-amber-500/40 px-2.5 py-1.5 rounded-xl text-xs font-bold text-amber-800 transition" title="طباعة اقتصادية بدون خلفيات داكنة">
+              <input type="checkbox" id="pointingInkSaverToggle" onchange="toggleInkSaver(this.checked)" class="w-3.5 h-3.5 text-amber-500 bg-white border-amber-500 rounded focus:ring-amber-400">
+              <span>🖨️ توفير الحبر</span>
+            </label>
+
+            <div class="flex items-center gap-1 bg-slate-100 px-2 py-1 rounded-xl border border-slate-200 text-xs font-bold" title="قالب الورقة الدوارة">
+              <span class="text-slate-600">القالب:</span>
+              <select id="pointingTemplateSelect" onchange="handleTemplateChange(this.value)" class="bg-white text-emerald-700 text-xs font-black p-1.5 border border-slate-300 rounded-lg outline-none cursor-pointer">
+                <option value="classic-dz">1. الرسمي الكلاسيكي</option>
+                <option value="modern-card">2. العصري النيومورفي</option>
+                <option value="royal-academic">3. الأكاديمي الملكي</option>
+                <option value="minimal-grid">4. المينيمالي الأحادي</option>
+                <option value="tech-blueprint">5. التقني الهندسي</option>
+                <option value="weekly-journal">6. المفكرة المدرسية</option>
+                <option value="ribbon-edge">7. الشريطي الحديث</option>
+                <option value="corporate-flat">8. المؤسساتي المنبسط</option>
+                <option value="vintage-parchment">9. الورقي العتيق</option>
+                <option value="ultra-compact">10. المضغوط الفائق</option>
+              </select>
+            </div>
+
+            <button onclick="printCurrentPointingSheet()" class="bg-brand-600 hover:bg-brand-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md transition transform hover:-translate-y-0.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+              <span>طباعة الفترة الحالية</span>
+            </button>
+
+            <button onclick="printAllPointingSheets()" class="bg-slate-900 hover:bg-slate-800 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md transition transform hover:-translate-y-0.5" title="طباعة جميع فترات الأسبوع">
+              <span>📚</span>
+              <span>طباعة كل فترات الأسبوع</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Pointing Display Content Toggles -->
+        <div class="flex items-center justify-between flex-wrap gap-3 p-3 bg-emerald-50/70 rounded-xl border border-emerald-200/80 text-xs font-bold">
+          <div class="flex items-center gap-2 text-emerald-950 font-black">
+            <span>🎛️ عناصر عرض الخلايا:</span>
+          </div>
+          <div class="flex items-center gap-4 flex-wrap text-slate-800">
+            <label class="flex items-center gap-1.5 cursor-pointer bg-white px-2.5 py-1 rounded-lg border border-emerald-300 shadow-xs hover:border-brand-500 transition">
+              <input type="checkbox" id="pointingShowSubjectsToggle" onchange="handlePointingDisplayToggle()" checked class="w-3.5 h-3.5 text-brand-600 rounded border-slate-300 focus:ring-brand-500">
+              <span>📚 إظهار المادة</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer bg-white px-2.5 py-1 rounded-lg border border-emerald-300 shadow-xs hover:border-brand-500 transition">
+              <input type="checkbox" id="pointingShowTeachersToggle" onchange="handlePointingDisplayToggle()" checked class="w-3.5 h-3.5 text-brand-600 rounded border-slate-300 focus:ring-brand-500">
+              <span>👨‍🏫 إظهار الأستاذ</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer bg-white px-2.5 py-1 rounded-lg border border-emerald-300 shadow-xs hover:border-brand-500 transition">
+              <input type="checkbox" id="pointingShowRoomsToggle" onchange="handlePointingDisplayToggle()" checked class="w-3.5 h-3.5 text-brand-600 rounded border-slate-300 focus:ring-brand-500">
+              <span>🏛️ إظهار القاعة</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer bg-white px-2.5 py-1 rounded-lg border border-emerald-300 shadow-xs hover:border-brand-500 transition">
+              <input type="checkbox" id="pointingShowSignToggle" onchange="handlePointingDisplayToggle()" checked class="w-3.5 h-3.5 text-brand-600 rounded border-slate-300 focus:ring-brand-500">
+              <span>✍️ مربع تأشيرة وإمضاء الأستاذ</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="bg-slate-50/60 p-3 sm:p-5 rounded-xl border border-slate-200">
+          <div id="pointingSheetPreview" class="a4-sheet-canvas bg-white rounded-xl shadow-paper border border-slate-300 p-4 transition-all mx-auto max-w-full overflow-hidden">
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div id="settingsPanel" class="hidden space-y-6">
+      <div class="bg-white rounded-2xl shadow-paper border border-slate-200 p-5 sm:p-8">
+        
+        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-5 mb-6">
+          <div>
+            <h2 class="text-lg sm:text-xl font-black text-slate-900 flex items-center gap-2">
+              <span class="w-9 h-9 rounded-xl bg-brand-100 text-brand-800 flex items-center justify-center text-xl">⚙️</span>
+              إعدادات المنظومة والمزامنة السحابية
+            </h2>
+            <p class="text-xs text-slate-500 font-medium mt-1">تحكم كامل في مسميات أيام الدراسة، توقيت الحصص الصباحية والمسائية، والترويسة الوزارية والقوالب الهيكلية</p>
+          </div>
+          <button onclick="saveAndApplySettings()" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-md transition transform hover:-translate-y-0.5 flex items-center gap-2">
+            <span>💾</span>
+            <span>حفظ وتطبيق التغييرات</span>
+          </button>
+        </div>
+
+        <div class="mb-8 p-6 bg-gradient-to-br from-emerald-950 via-slate-900 to-slate-950 text-white rounded-2xl border-2 border-emerald-500/40 shadow-xl space-y-5">
+          <div class="flex items-center justify-between flex-wrap gap-4 border-b border-slate-800 pb-4">
+            <div class="flex items-center gap-3">
+              <span class="text-3xl">☁️</span>
+              <div>
+                <h3 class="font-black text-base text-emerald-400">مزامنة ونشر المنظومة على خادم FETSync السحابي</h3>
+                <p class="text-xs text-slate-300 mt-0.5">رفع صفحات HTML وتوليد روابط ورموز QR متزامنة، مع إمكانية استرجاع وتحديث نفس المشروع للحفاظ على رموز QR المطبوعة دون تغيير.</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button onclick="exportProjectToFile()" class="bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-emerald-500/30 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5">
+                <span>💾 حفظ المشروع كملف (.fetpro)</span>
+              </button>
+              <label class="cursor-pointer bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-emerald-500/30 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5">
+                <span>📂 فتح مشروع من ملف</span>
+                <input type="file" accept=".fetpro,.json" class="hidden" onchange="importProjectFromFile(event)">
+              </label>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+            <div class="md:col-span-4">
+              <label class="block text-xs font-black text-emerald-300 mb-1.5">كود الترخيص للرفع:</label>
+              <div class="relative">
+                <input type="password" id="cfgPromoCode" placeholder="أدخل كود الترخيص..." class="w-full text-xs font-mono font-black tracking-widest p-2.5 bg-slate-900 border border-emerald-500/60 rounded-xl text-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-400 shadow-inner">
+                <button type="button" onclick="togglePromoCodeVisibility()" class="absolute left-3 top-2.5 text-xs text-emerald-400 hover:text-white" title="إظهار / إخفاء الكود">👁️</button>
+              </div>
+              <span class="text-[10px] text-slate-400 mt-1 block">كود الترخيص الافتراضي المعتمد للمزامنة.</span>
+            </div>
+
+            <div class="md:col-span-4">
+              <label class="block text-xs font-black text-emerald-300 mb-1.5">اسم مجلد التخزين على السيرفر (Latin Letters Only) <span class="text-rose-400">*</span>:</label>
+              <input type="text" id="cfgProjectSlug" value="" placeholder="أدخل اسم المجلد (مثال: lycee-motanabi-2026)..." oninput="sanitizeProjectSlugInput(this)" class="w-full text-xs font-mono font-bold p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-1 focus:ring-emerald-400 shadow-inner">
+              <span class="text-[10px] text-slate-400 mt-1 block">استخدم نفس الاسم دائماً لتحديث جداولك والحفاظ على نفس رمز QR المطبوع.</span>
+            </div>
+
+            <div class="md:col-span-4 flex items-center gap-2">
+              <button onclick="syncAndUploadToServer()" id="btnUploadServer" class="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs py-3 px-3 rounded-xl shadow-lg transition flex items-center justify-center gap-1.5 transform active:scale-95">
+                <span class="text-base">🚀</span>
+                <span>رفع وتحديث على السيرفر</span>
+              </button>
+              <button onclick="restoreProjectFromCloud()" id="btnRestoreServer" class="bg-slate-800 hover:bg-slate-700 text-amber-300 hover:text-white border border-amber-500/40 font-black text-xs py-3 px-3 rounded-xl shadow transition flex items-center justify-center gap-1.5" title="استرجاع بيانات المشروع وإعداداته من السيرفر مباشرة">
+                <span>📥</span>
+                <span>استرجاع</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between flex-wrap gap-2 text-[11px] bg-slate-900/60 p-2.5 rounded-xl border border-slate-800 text-slate-300">
+            <label class="flex items-center gap-2 cursor-pointer font-bold text-emerald-300">
+              <input type="checkbox" id="cfgAllowOverwrite" checked class="w-3.5 h-3.5 text-emerald-500 rounded bg-slate-950 border-emerald-600 focus:ring-emerald-400">
+              <span>السماح بتحديث المجلد القائم (يحافظ على جميع روابط ورموز QR المطبوعة دون تغيير)</span>
+            </label>
+            <span class="text-slate-400 font-mono text-[10px]">Project State Auto-Sync: Enabled ✅</span>
+          </div>
+
+          <div id="uploadStatusBox" class="hidden p-3 rounded-xl bg-slate-900/90 border border-emerald-500/40 text-xs font-bold space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span id="uploadStatusText" class="text-emerald-300">جاري الرفع...</span>
+              <a id="uploadPortalLink" href="#" target="_blank" class="hidden text-brand-400 underline hover:text-brand-300 font-mono">فتح البوابة الإلكترونية للمؤسسة ↗</a>
+            </div>
+            <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+              <div id="uploadProgressFill" class="bg-gradient-to-r from-emerald-500 to-teal-400 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+          <div class="space-y-5 bg-slate-50/50 p-5 rounded-xl border border-slate-200 shadow-inner-soft">
+            <h3 class="font-extrabold text-sm text-slate-800 border-r-4 border-brand-500 pr-2">1. القالب وشكل العرض</h3>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1.5">هيئة توزع الأيام والحصص الافتراضية:</label>
+              <select id="cfgGridOrientation" class="w-full text-xs font-bold p-2.5 border border-slate-300 rounded-lg bg-white shadow-sm focus:border-brand-400 focus:ring-1 focus:ring-brand-400 outline-none transition">
+                <option value="days-cols">الأيام أفقياً في الأعمدة (الحصص في الأسطر)</option>
+                <option value="days-rows">الأيام رأسياً في الأسطر (الحصص في الأعمدة)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1.5">قالب التصميم الهيكلي:</label>
+              <select id="cfgTemplateSelect" onchange="handleTemplateChange(this.value)" class="w-full text-xs font-bold p-2.5 border border-slate-300 rounded-lg bg-white shadow-sm focus:border-brand-400 focus:ring-1 focus:ring-brand-400 outline-none transition">
+                <option value="classic-dz">1. الرسمي الجزائري الكلاسيكي</option>
+                <option value="modern-card">2. العصري النيومورفي</option>
+                <option value="royal-academic">3. الأكاديمي الملكي</option>
+                <option value="minimal-grid">4. المينيمالي الأحادي</option>
+                <option value="tech-blueprint">5. التقني الهندسي</option>
+                <option value="weekly-journal">6. المفكرة المدرسية</option>
+                <option value="ribbon-edge">7. الشريطي الحديث</option>
+                <option value="corporate-flat">8. المؤسساتي المنبسط</option>
+                <option value="vintage-parchment">9. الورقي العتيق</option>
+                <option value="ultra-compact">10. المضغوط الاقتصادي الفائق</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1.5">نمط الألوان المتناسق:</label>
+              <select id="cfgThemeSelect" class="w-full text-xs font-bold p-2.5 border border-slate-300 rounded-lg bg-white shadow-sm focus:border-brand-400 focus:ring-1 focus:ring-brand-400 outline-none transition">
+                <option value="classic-dz">الرسمي الجزائري (Classic Emerald)</option>
+                <option value="azure-modern">الأزرق الحديث (Modern Azure)</option>
+                <option value="royal-academy">الأكاديمي الملكي (Royal Violet)</option>
+                <option value="slate-corporate">المؤسساتي الأنيق (Slate Dark)</option>
+                <option value="burgundy">العنابي التربوي (Burgundy)</option>
+                <option value="sahara">الترابي الصحراوي (Terracotta)</option>
+                <option value="monochrome">المينيمالي الأحادي (B&W)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1.5">اتجاه ورقة الطباعة العامة (Orientation):</label>
+              <select id="cfgPageOrientation" class="w-full text-xs font-bold p-2.5 border border-slate-300 rounded-lg bg-white shadow-sm focus:border-brand-400 focus:ring-1 focus:ring-brand-400 outline-none transition">
+                <option value="landscape">أفقي (Landscape) - موصى به</option>
+                <option value="portrait">عمودي (Portrait)</option>
+              </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">خط الترويسة:</label>
+                <select id="cfgHeaderFont" class="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white outline-none">
+                  <option value="'Cairo', sans-serif">خط القاهرة (Cairo)</option>
+                  <option value="'Amiri', serif">خط أميري (Amiri)</option>
+                  <option value="'Tajawal', sans-serif">خط تجوال (Tajawal)</option>
+                  <option value="'Changa', sans-serif">خط تشانغا (Changa)</option>
+                  <option value="'IBM Plex Sans Arabic', sans-serif">IBM Plex Sans</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">خط القاعات والأرقام:</label>
+                <select id="cfgRoomFont" class="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white outline-none">
+                  <option value="'Fira Code', monospace">Fira Code (تقني)</option>
+                  <option value="'Cairo', sans-serif">Cairo</option>
+                  <option value="monospace">Monospace افتراضي</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-4 bg-slate-50/50 p-5 rounded-xl border border-slate-200 shadow-inner-soft">
+            <h3 class="font-extrabold text-sm text-slate-800 border-r-4 border-brand-500 pr-2">2. الترويسة الوزارية والبيانات</h3>
+
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">الجمهورية:</label>
+              <input type="text" id="cfgRepText" class="w-full text-xs font-bold p-2 border border-slate-300 rounded-lg bg-white shadow-sm outline-none">
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">الوزارة:</label>
+              <input type="text" id="cfgMinistry" class="w-full text-xs font-bold p-2 border border-slate-300 rounded-lg bg-white shadow-sm outline-none">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">المديرية الولائية:</label>
+                <input type="text" id="cfgDirectorate" class="w-full text-xs font-bold p-2 border border-slate-300 rounded-lg bg-white shadow-sm outline-none">
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">اسم المؤسسة:</label>
+                <input type="text" id="cfgSchoolName" class="w-full text-xs font-bold p-2 border border-slate-300 rounded-lg bg-white shadow-sm outline-none">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">عنوان وثيقة الجدول:</label>
+                <input type="text" id="cfgDocTitle" class="w-full text-xs font-bold p-2 border border-slate-300 rounded-lg bg-white shadow-sm outline-none">
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">السنة الدراسية:</label>
+                <input type="text" id="cfgSchoolYear" class="w-full text-xs font-bold p-2 border border-slate-300 rounded-lg bg-white shadow-sm outline-none">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-black text-brand-900 mb-1">عنوان الورقة الدوارة (الحضور اليومي):</label>
+              <input type="text" id="cfgPointingTitle" value="" placeholder="ورقة الحضور اليومي والغيابات (الورقة الدوارة)" class="w-full text-xs font-bold p-2 border border-brand-300 rounded-lg bg-brand-50/30 shadow-sm outline-none">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[10px] font-bold text-slate-600 mb-1">صفة المتابع الإداري (يسار):</label>
+                <input type="text" id="cfgPointingAdminLabel" value="" placeholder="مستشار(ة) التربية" class="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white shadow-sm outline-none">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-600 mb-1">صفة المشرف على الجناح (يمين):</label>
+                <input type="text" id="cfgPointingSupervisorLabel" value="" placeholder="المشرف(ة) المكلف(ة) بالجناح" class="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white shadow-sm outline-none">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">نص التقديم التربوي:</label>
+              <textarea id="cfgIntroText" rows="2" class="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white shadow-sm outline-none"></textarea>
+            </div>
+
+            <div class="flex gap-4 p-2 bg-brand-50/60 rounded-lg border border-brand-200 text-xs font-bold text-slate-800">
+              <label class="flex items-center gap-1.5 cursor-pointer">
+                <input type="checkbox" id="cfgShowIntroClasses" class="w-3.5 h-3.5 text-brand-600 rounded focus:ring-brand-500">
+                <span>إظهار في الأقسام</span>
+              </label>
+              <label class="flex items-center gap-1.5 cursor-pointer">
+                <input type="checkbox" id="cfgShowIntroTeachers" class="w-3.5 h-3.5 text-brand-600 rounded focus:ring-brand-500">
+                <span>إظهار في الأساتذة</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="space-y-4 bg-slate-50/50 p-5 rounded-xl border border-slate-200 shadow-inner-soft">
+            <h3 class="font-extrabold text-sm text-slate-800 border-r-4 border-brand-500 pr-2">3. التأشيرة وتوقيع المدير</h3>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">التأشيرة ومكان التحرير:</label>
+                <input type="text" id="cfgStampLabel" class="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white shadow-sm font-bold outline-none">
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">صفة المسؤول:</label>
+                <input type="text" id="cfgDirectorLabel" class="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white shadow-sm font-bold outline-none">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">الملاحظة السفلية:</label>
+              <input type="text" id="cfgFooterNote" class="w-full text-xs p-2 border border-slate-300 rounded-lg bg-white shadow-sm outline-none">
+            </div>
+
+            <div class="p-4 bg-brand-50/70 rounded-xl border border-brand-200">
+              <span class="block text-xs font-extrabold text-brand-950 mb-1">📱 رمز الاستجابة السريعة (QR):</span>
+              <p class="text-[11px] text-slate-600 leading-relaxed">
+                يتم توليد رمز QR عالي الدقة مخصص لكل جدول مع رابط مباشر متوافق مع كافة كاميرات الهواتف الذكية.
+              </p>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="mt-8 pt-6 border-t border-slate-200 space-y-6">
+          <div class="flex items-center justify-between flex-wrap gap-3">
+            <h3 class="font-black text-slate-800 text-base flex items-center gap-2 border-r-4 border-brand-500 pr-2">
+              ⏰ 4. توقيت الحصص الصباحية والمسائية
+            </h3>
+          </div>
+          <div id="daysSlotsEditorContainer" class="overflow-x-auto bg-slate-50 p-4 rounded-xl border border-slate-200"></div>
+
+          <div class="flex items-center justify-between flex-wrap gap-3 pt-4 border-t border-slate-200">
+            <h3 class="font-black text-slate-800 text-base flex items-center gap-2 border-r-4 border-brand-500 pr-2">
+              🎨 5. تخصيص درجات ألوان المواد الدراسية
+            </h3>
+            <button onclick="resetSubjectColorsToDefault()" class="text-xs bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 px-4 py-2 rounded-lg font-bold shadow-sm transition">
+              استرجاع الألوان الافتراضية
+            </button>
+          </div>
+          <div id="subjectColorsContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3"></div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="no-print bg-slate-900 text-slate-400 text-xs py-6 text-center mt-auto border-t border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="font-medium">منظومة طباعة وتوزيع جداول FET المدرسية • Precision A4 Print Engine V3.2 Universal Pro</div>
+      <div class="font-bold text-brand-400 font-mono tracking-wide text-xs sm:text-sm bg-slate-800/50 px-4 py-1.5 rounded-full">
+        ( shamildev ❤️ ) صدقة على والدي المرحوم بوزويرة قادة
+      </div>
+      <div class="font-medium">الجمهورية الجزائرية الديمقراطية الشعبية</div>
+    </div>
+  </footer>
+
+  <!-- Modal: Pre-import Review & Edit -->
+  <div id="preImportModal" class="no-print fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 hidden">
+    <div class="bg-white w-full max-w-4xl max-h-[92vh] rounded-2xl shadow-2xl border border-slate-300 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Modal Header -->
+      <div class="bg-slate-900 text-white p-4 sm:p-5 flex items-center justify-between border-b border-slate-800">
+        <div class="flex items-center gap-3">
+          <span class="w-10 h-10 rounded-xl bg-brand-600/30 border border-brand-500/40 flex items-center justify-center text-xl">🛠️</span>
+          <div>
+            <h3 class="font-black text-base text-white">مراجعة وتعديل بيانات الملف المستورد</h3>
+            <p class="text-xs text-slate-400 font-medium">يمكنك تعديل اسم المؤسسة وأسماء الأساتذة والأقسام قبل اعتماد الاستيراد أو تخطيه مباشرة</p>
+          </div>
+        </div>
+        <button onclick="closePreImportModal()" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition">✕</button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-4 sm:p-6 overflow-y-auto custom-scrollbar space-y-6 flex-1 bg-slate-50/50">
+        
+        <!-- Institution Field -->
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+          <label class="block text-xs font-black text-slate-800 mb-1.5">اسم المؤسسة التعليمية:</label>
+          <input type="text" id="modalInstNameInput" class="w-full text-xs font-bold p-2.5 border border-slate-300 rounded-lg bg-slate-50 focus:bg-white focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition">
+        </div>
+
+        <!-- Quick Tabs for Teachers & Classes -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          
+          <!-- Classes / Groups Column -->
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col max-h-[380px]">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-200 mb-3">
+              <span class="text-xs font-black text-slate-900 flex items-center gap-1.5">
+                <span>👨‍🎓</span>
+                <span>تعديل أسماء الأقسام والأفواج</span>
+              </span>
+              <span id="modalClassesCountBadge" class="bg-brand-100 text-brand-800 text-[10px] font-bold px-2 py-0.5 rounded-full">0</span>
+            </div>
+            <div id="modalClassesListContainer" class="space-y-2 overflow-y-auto custom-scrollbar pr-1 flex-1">
+            </div>
+          </div>
+
+          <!-- Teachers Column -->
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col max-h-[380px]">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-200 mb-3">
+              <span class="text-xs font-black text-slate-900 flex items-center gap-1.5">
+                <span>👨‍🏫</span>
+                <span>تعديل أسماء الأساتذة</span>
+              </span>
+              <span id="modalTeachersCountBadge" class="bg-brand-100 text-brand-800 text-[10px] font-bold px-2 py-0.5 rounded-full">0</span>
+            </div>
+            <div id="modalTeachersListContainer" class="space-y-2 overflow-y-auto custom-scrollbar pr-1 flex-1">
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 bg-white border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+        <button onclick="closePreImportModal()" class="text-slate-600 hover:text-slate-900 text-xs font-bold px-4 py-2 rounded-xl hover:bg-slate-100 transition">
+          إلغاء الأمر
+        </button>
+
+        <div class="flex items-center gap-2">
+          <button onclick="applyPreImportWithoutChanges()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black px-4 py-2.5 rounded-xl border border-slate-300 transition">
+            استيراد مباشر بدون تعديل ⏩
+          </button>
+          <button onclick="confirmCustomizedImport()" class="bg-brand-600 hover:bg-brand-700 text-white text-xs font-black px-5 py-2.5 rounded-xl shadow-md transition transform hover:-translate-y-0.5">
+            تطبيق التعديلات والاستيراد ✅
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="printAllContainer" class="hidden w-full m-0 p-0"></div>
+
+  <div id="toast" class="no-print fixed bottom-6 left-6 bg-slate-900 text-white px-5 py-3.5 rounded-xl shadow-2xl text-xs font-bold transform transition-all duration-300 translate-y-24 opacity-0 z-50 flex items-center gap-3 border border-slate-700">
+    <span class="w-2.5 h-2.5 rounded-full bg-brand-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span>
+    <span id="toastMsg" class="tracking-wide">تم التحديث بنجاح</span>
+  </div>
+
+
+  <!-- Application Logic -->
+  <script src="js/app.js"></script>
+</body>
+</html>
